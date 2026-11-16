@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Vet and test
+        run: |
+          go vet ./...
+          go test ./...
+
+      # The benchmarks live in their own module; this checks that both libraries extract the same records.
+      - name: Bench module
+        working-directory: bench
+        run: |
+          go vet ./...
+          go test -run SameRecords .

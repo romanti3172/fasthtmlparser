@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Dumps what z3l.FastHtmlParser (.NET) makes of each page in testdata/conformance/input:
+      dotnet run -c Release ../../testdata/conformance/input ../../testdata/conformance/expected
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="z3l.FastHtmlParser" Version="1.4.0" />
+  </ItemGroup>
+</Project>
