@@ -146,6 +146,18 @@ The XPath engine builds node-sets per step; that is where its allocations come f
 - `bench/`: benchmarks in their own module, so the library has no dependencies
 - `tools/conformance/`: builds the conformance data from the .NET version
 
+## Other languages
+
+The same parser is available for:
+
+| Language | Package | Source |
+|---|---|---|
+| C# (.NET 9 and 10) | [z3l.FastHtmlParser](https://www.nuget.org/packages/z3l.FastHtmlParser) on NuGet | [romanti3172/z3l.FastHtmlParser](https://github.com/romanti3172/z3l.FastHtmlParser) |
+| Go | `github.com/romanti3172/fasthtmlparser` | [romanti3172/fasthtmlparser](https://github.com/romanti3172/fasthtmlparser) |
+| Rust | [fasthtmlparser](https://crates.io/crates/fasthtmlparser) on crates.io | [romanti3172/fasthtmlparser-rs](https://github.com/romanti3172/fasthtmlparser-rs) |
+| JavaScript / TypeScript | [z3l-fasthtmlparser](https://www.npmjs.com/package/z3l-fasthtmlparser) on npm | [romanti3172/fasthtmlparser-js](https://github.com/romanti3172/fasthtmlparser-js) |
+| Python | [fasthtmlparser](https://pypi.org/project/fasthtmlparser/) on PyPI | [romanti3172/fasthtmlparser-py](https://github.com/romanti3172/fasthtmlparser-py) |
+
 ## License
 
 Same terms as z3l.FastHtmlParser (see LICENSE.md).
