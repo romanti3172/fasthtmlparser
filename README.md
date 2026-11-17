@@ -44,7 +44,7 @@ the string-value of an element is its visible text, attribute values and text ar
 
 ## Same results as the .NET version
 
-The conformance tests compare the Go port with z3l.FastHtmlParser (.NET, 1.4.0 with the fixes not yet released: linear XPath on nested nodes, CR LF read as LF) on 115 pages: the test fixtures,
+The conformance tests compare the Go port with z3l.FastHtmlParser 1.4.1 (.NET) on 115 pages: the test fixtures,
 the broken-markup snippets of the .NET cross-check tests, extra edge cases (entities, raw text, comments, XML, custom
 elements, 600-deep nesting, Unicode whitespace), and every fixture with `</li> </p> </td> </tr>` left out, plus three
 copies of each with random end tags dropped, names upper-cased and the page cut off, and copies saved with CR LF and with a lone CR.
