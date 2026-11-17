@@ -1,4 +1,4 @@
-package fasthtml
+package fasthtmlparser
 
 import (
 	"fmt"
@@ -129,7 +129,7 @@ func (q *XPathQuery) eval(context xnode) any {
 
 func (q *XPathQuery) nodes(context xnode) []*Node {
 	if q.expr.typ() != xNodeSet {
-		panic(fmt.Sprintf("fasthtml: the XPath %q gives a %s, not tags; use XPathValue", q.expression, q.expr.typ()))
+		panic(fmt.Sprintf("fasthtmlparser: the XPath %q gives a %s, not tags; use XPathValue", q.expression, q.expr.typ()))
 	}
 	set := q.eval(context).(nodeSet)
 	var tags []*Node
@@ -732,7 +732,7 @@ func evalNodes(e xexpr, c *xctx) nodeSet {
 	if set, ok := e.eval(c).(nodeSet); ok {
 		return set
 	}
-	panic("fasthtml: the XPath expression does not give a node-set")
+	panic("fasthtmlparser: the XPath expression does not give a node-set")
 }
 
 func evalString(e xexpr, c *xctx) string  { return toString(e.eval(c)) }
@@ -1526,7 +1526,7 @@ func (e *functionExpr) call(c *xctx) any {
 	case fnRound:
 		return round(evalNumber(e.args[0], c))
 	}
-	panic("fasthtml: unknown XPath function")
+	panic("fasthtmlparser: unknown XPath function")
 }
 
 func round(v float64) float64 {

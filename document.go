@@ -1,4 +1,4 @@
-// Package fasthtml is a fast, low-allocation HTML / XML parser for scraping: a Go port of z3l.FastHtmlParser.
+// Package fasthtmlparser is a fast, low-allocation HTML / XML parser for scraping: a Go port of z3l.FastHtmlParser.
 //
 // A document is a flat list of tags in document order; each tag holds only positions in the source.
 // Text, attributes and entities are read lazily, when they are asked for. Documents are read-only
@@ -6,8 +6,8 @@
 //
 // Every method of *Node accepts a nil receiver and returns nil / "" / false, so chains never panic:
 //
-//	price := doc.Find(fasthtml.By(fasthtml.TagDiv).ID("main")).Find(fasthtml.By(fasthtml.TagSpan).Class("price")).Text()
-package fasthtml
+//	price := doc.Find(fasthtmlparser.By(fasthtmlparser.TagDiv).ID("main")).Find(fasthtmlparser.By(fasthtmlparser.TagSpan).Class("price")).Text()
+package fasthtmlparser
 
 import (
 	"net/url"

@@ -1,3 +1,3 @@
-module github.com/romanti3172/z3l.FastHtmlParser.Go
+module github.com/romanti3172/fasthtmlparser
 
 go 1.23.0

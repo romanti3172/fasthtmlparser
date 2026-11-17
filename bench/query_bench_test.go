@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/antchfx/htmlquery"
-	fh "github.com/romanti3172/z3l.FastHtmlParser.Go"
+	fh "github.com/romanti3172/fasthtmlparser"
 )
 
-// The same tasks as BenchmarkScrape, with XPath (fasthtml and antchfx/htmlquery, XPath on x/net/html)
-// and CSS selectors (fasthtml and goquery). Queries are compiled once, as a scraper would.
+// The same tasks as BenchmarkScrape, with XPath (fasthtmlparser and antchfx/htmlquery, XPath on x/net/html)
+// and CSS selectors (fasthtmlparser and goquery). Queries are compiled once, as a scraper would.
 
 var (
 	podsXPath   = fh.MustCompileXPath("//article[contains(concat(' ', @class, ' '), ' product_pod ')]")
@@ -84,9 +84,9 @@ func quotesFastCSS(page string) []quote {
 func TestSameRecordsQueries(t *testing.T) {
 	want := booksGoquery(books)
 	for name, got := range map[string][]book{
-		"fasthtml XPath": booksFastXPath(books),
-		"fasthtml CSS":   booksFastCSS(books),
-		"htmlquery":      booksHtmlquery(books),
+		"fasthtmlparser XPath": booksFastXPath(books),
+		"fasthtmlparser CSS":   booksFastCSS(books),
+		"htmlquery":            booksHtmlquery(books),
 	} {
 		if len(got) != 20 || !slices.Equal(got, want) {
 			t.Fatalf("%s: books differ:\n%v\n%v", name, got, want)

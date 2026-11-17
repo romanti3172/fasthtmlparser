@@ -1,17 +1,25 @@
-# z3l.FastHtmlParser.Go
+# fasthtmlparser
 
 Go port of [z3l.FastHtmlParser](https://github.com/romanti3172/z3l.FastHtmlParser): a fast, low-allocation
 HTML / XML parser for scraping. The whole API is ported: the parser, attributes, HTML5 entities, visible text and text
 with line breaks, `Find` / `FindAll`, navigation, links, **XPath 1.0**, **CSS selectors** and the one-call shortcuts.
 Only the .NET-specific parts are left out: parsing from a pooled `char[]` buffer and `Dispose`.
 
+```
+go get github.com/romanti3172/fasthtmlparser
+```
+
+Go 1.23 or later, no dependencies.
+
 ```go
-doc := fasthtml.ParseWithURL(page, "https://example.com/catalog/") // or fasthtml.Parse(page)
+import "github.com/romanti3172/fasthtmlparser"
+
+doc := fasthtmlparser.ParseWithURL(page, "https://example.com/catalog/") // or fasthtmlparser.Parse(page)
 
 // search by name, class, id, attribute, text
-for _, pod := range doc.FindAll(fasthtml.By(fasthtml.TagArticle).Class("product_pod")) {
-    title := pod.Find(fasthtml.By(fasthtml.TagH3)).Find(fasthtml.By(fasthtml.TagA)).Attr("title")
-    price := pod.Find(fasthtml.By(fasthtml.TagP).Class("price_color")).Text()
+for _, pod := range doc.FindAll(fasthtmlparser.By(fasthtmlparser.TagArticle).Class("product_pod")) {
+    title := pod.Find(fasthtmlparser.By(fasthtmlparser.TagH3)).Find(fasthtmlparser.By(fasthtmlparser.TagA)).Attr("title")
+    price := pod.Find(fasthtmlparser.By(fasthtmlparser.TagP).Class("price_color")).Text()
 }
 
 // CSS selectors, as querySelectorAll / querySelector / matches
@@ -27,31 +35,31 @@ doc.XPathValue("//dt[.='Price']/following-sibling::dd[1]")
 doc.XPathValue("count(//table//tr)") // "12"
 
 // compile once, reuse on any number of pages and goroutines
-var titles = fasthtml.MustCompileXPath("//article//h3/a/@title")
+var titles = fasthtmlparser.MustCompileXPath("//article//h3/a/@title")
 titles.Values(doc)
 
 // one-call shortcuts (FindByName*, FindAllByName*, IsName*, ParentByName, NextSiblingByName, Attribute*, ...)
-pod := doc.FindByNameClass(fasthtml.TagArticle, "product_pod")
-pod.FindByNameItemprop(fasthtml.TagSpan, "price").Text()
-doc.FindByNameText(fasthtml.TagDt, "Price").NextSiblingByName(fasthtml.TagDd).Text()
+pod := doc.FindByNameClass(fasthtmlparser.TagArticle, "product_pod")
+pod.FindByNameItemprop(fasthtmlparser.TagSpan, "price").Text()
+doc.FindByNameText(fasthtmlparser.TagDt, "Price").NextSiblingByName(fasthtmlparser.TagDd).Text()
 
 // reading a tag
 tag.Text()           // visible text, entities decoded
 tag.TextLineBreaks() // <br> and block elements → new line, <p> and headings → paragraph
-tag.Attr(fasthtml.AttrDataSrc) // decoded value; AttrRaw: as written
+tag.Attr(fasthtmlparser.AttrDataSrc) // decoded value; AttrRaw: as written
 tag.Href()           // absolute URL, resolved against the page URL; Src() for src
 tag.HrefMailTo()     // the address of a mailto: link; HrefTelephone() for tel:
 tag.Source()         // the opening tag without '<' and '>'
 
 // navigation
 tag.Parent(); tag.Children(); tag.NextSibling(); tag.PreviousSibling(); tag.Next(); tag.Previous()
-tag.ParentMatching(fasthtml.By(fasthtml.TagTable))
-tag.TextAfterUntil(fasthtml.By(fasthtml.TagBr)) // the source between the tag and the next <br>
+tag.ParentMatching(fasthtmlparser.By(fasthtmlparser.TagTable))
+tag.TextAfterUntil(fasthtmlparser.By(fasthtmlparser.TagBr)) // the source between the tag and the next <br>
 ```
 
 Queries: `By(tag)`, `ByName("custom-tag")` or `Any()`, then `.Class`, `.ID`, `.Attr`, `.Text`, `.IDStartsWith`,
 `.TextStartsWith`, `.Body`, `.BodyStartsWith`, `.Source`. The shortcuts take a `Tag`; for other names use a query:
-`doc.Find(fasthtml.ByName("my-widget").Class("x"))`. `Tag*` and `Attr*` constants cover about 250 tag and 230 attribute
+`doc.Find(fasthtmlparser.ByName("my-widget").Class("x"))`. `Tag*` and `Attr*` constants cover about 250 tag and 230 attribute
 names (HTML, SVG, MathML, RSS, Atom, sitemap); any other attribute name works as a string.
 
 Every `*Node` method accepts nil and returns nil / "" / false, so chains never panic on a missing tag.
@@ -100,7 +108,7 @@ goquery parses with golang.org/x/net/html and selects with cascadia; antchfx/htm
 
 Parse a page:
 
-| Page | fasthtml | x/net/html | Ratio | Memory fasthtml | x/net/html | Allocs fasthtml | x/net/html |
+| Page | fasthtmlparser | x/net/html | Ratio | Memory fasthtmlparser | x/net/html | Allocs fasthtmlparser | x/net/html |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | quotes, 11 KB | 28 μs | 299 μs | 10.6x | 9.5 KB | 96 KB | 2 | 2,498 |
 | laptops, 38 KB | 89 μs | 1,001 μs | 11.2x | 24.7 KB | 302 KB | 2 | 7,886 |
@@ -111,7 +119,7 @@ Parse a page:
 Scrape a page: parse and extract the records (`TestSameRecords*` check that every variant returns the same records).
 Books: 20 × title, price, rating; quotes: 10 × text, author, tags.
 
-| Task | fasthtml | Other | Ratio | Memory fasthtml | Other | Allocs fasthtml | Other |
+| Task | fasthtmlparser | Other | Ratio | Memory fasthtmlparser | Other | Allocs fasthtmlparser | Other |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | books, `Find` / goquery | 122 μs | 1,089 μs | 8.9x | 37.8 KB | 307 KB | 15 | 7,391 |
 | books, CSS / goquery | 128 μs | 1,080 μs | 8.4x | 39.8 KB | 307 KB | 136 | 7,391 |

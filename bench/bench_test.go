@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	fh "github.com/romanti3172/z3l.FastHtmlParser.Go"
+	fh "github.com/romanti3172/fasthtmlparser"
 	"golang.org/x/net/html"
 )
 
@@ -41,7 +41,7 @@ var (
 
 func BenchmarkParse(b *testing.B) {
 	for _, p := range pages {
-		b.Run(p.name+"/fasthtml", func(b *testing.B) {
+		b.Run(p.name+"/fasthtmlparser", func(b *testing.B) {
 			b.SetBytes(int64(len(p.html)))
 			for b.Loop() {
 				fh.Parse(p.html)
@@ -144,7 +144,7 @@ func TestSameRecords(t *testing.T) {
 }
 
 func BenchmarkScrape(b *testing.B) {
-	b.Run("books/fasthtml", func(b *testing.B) {
+	b.Run("books/fasthtmlparser", func(b *testing.B) {
 		for b.Loop() {
 			booksFast(books)
 		}
@@ -154,7 +154,7 @@ func BenchmarkScrape(b *testing.B) {
 			booksGoquery(books)
 		}
 	})
-	b.Run("quotes/fasthtml", func(b *testing.B) {
+	b.Run("quotes/fasthtmlparser", func(b *testing.B) {
 		for b.Loop() {
 			quotesFast(quotes)
 		}

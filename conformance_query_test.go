@@ -1,4 +1,4 @@
-package fasthtml
+package fasthtmlparser
 
 import (
 	"crypto/sha256"

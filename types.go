@@ -1,4 +1,4 @@
-package fasthtml
+package fasthtmlparser
 
 // Tag is a known tag name; index into tagNames.
 type Tag int16

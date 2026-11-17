@@ -1,4 +1,4 @@
-package fasthtml
+package fasthtmlparser
 
 //go:generate go run ./internal/genshortcuts
 
