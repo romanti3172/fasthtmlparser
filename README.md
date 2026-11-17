@@ -1,12 +1,12 @@
-# z3l.FastHtmlParser.Go (prototype)
+# z3l.FastHtmlParser.Go
 
 Go port of [z3l.FastHtmlParser](https://github.com/romanti3172/z3l.FastHtmlParser): a fast, low-allocation
-HTML / XML parser for scraping. Ported: the parser, attributes, HTML5 entities, visible text, `Find` / `FindAll`,
-navigation, **XPath 1.0** and **CSS selectors**. Not ported yet: `TextLineBreaks`, URL helpers, the `HtmlAttribute` enum
-and the one-call shortcuts.
+HTML / XML parser for scraping. The whole API is ported: the parser, attributes, HTML5 entities, visible text and text
+with line breaks, `Find` / `FindAll`, navigation, links, **XPath 1.0**, **CSS selectors** and the one-call shortcuts.
+Only the .NET-specific parts are left out: parsing from a pooled `char[]` buffer and `Dispose`.
 
 ```go
-doc := fasthtml.Parse(page)
+doc := fasthtml.ParseWithURL(page, "https://example.com/catalog/") // or fasthtml.Parse(page)
 
 // search by name, class, id, attribute, text
 for _, pod := range doc.FindAll(fasthtml.By(fasthtml.TagArticle).Class("product_pod")) {
@@ -29,7 +29,30 @@ doc.XPathValue("count(//table//tr)") // "12"
 // compile once, reuse on any number of pages and goroutines
 var titles = fasthtml.MustCompileXPath("//article//h3/a/@title")
 titles.Values(doc)
+
+// one-call shortcuts (FindByName*, FindAllByName*, IsName*, ParentByName, NextSiblingByName, Attribute*, ...)
+pod := doc.FindByNameClass(fasthtml.TagArticle, "product_pod")
+pod.FindByNameItemprop(fasthtml.TagSpan, "price").Text()
+doc.FindByNameText(fasthtml.TagDt, "Price").NextSiblingByName(fasthtml.TagDd).Text()
+
+// reading a tag
+tag.Text()           // visible text, entities decoded
+tag.TextLineBreaks() // <br> and block elements → new line, <p> and headings → paragraph
+tag.Attr(fasthtml.AttrDataSrc) // decoded value; AttrRaw: as written
+tag.Href()           // absolute URL, resolved against the page URL; Src() for src
+tag.HrefMailTo()     // the address of a mailto: link; HrefTelephone() for tel:
+tag.Source()         // the opening tag without '<' and '>'
+
+// navigation
+tag.Parent(); tag.Children(); tag.NextSibling(); tag.PreviousSibling(); tag.Next(); tag.Previous()
+tag.ParentMatching(fasthtml.By(fasthtml.TagTable))
+tag.TextAfterUntil(fasthtml.By(fasthtml.TagBr)) // the source between the tag and the next <br>
 ```
+
+Queries: `By(tag)`, `ByName("custom-tag")` or `Any()`, then `.Class`, `.ID`, `.Attr`, `.Text`, `.IDStartsWith`,
+`.TextStartsWith`, `.Body`, `.BodyStartsWith`, `.Source`. The shortcuts take a `Tag`; for other names use a query:
+`doc.Find(fasthtml.ByName("my-widget").Class("x"))`. `Tag*` and `Attr*` constants cover about 250 tag and 230 attribute
+names (HTML, SVG, MathML, RSS, Atom, sitemap); any other attribute name works as a string.
 
 Every `*Node` method accepts nil and returns nil / "" / false, so chains never panic on a missing tag.
 The string methods (`CSS`, `XPath`, ...) compile and cache the query and panic on an invalid one, as
@@ -44,13 +67,16 @@ the string-value of an element is its visible text, attribute values and text ar
 
 ## Same results as the .NET version
 
-The conformance tests compare the Go port with z3l.FastHtmlParser 1.4.1 (.NET) on 115 pages: the test fixtures,
+The conformance tests compare the Go port with z3l.FastHtmlParser 1.4.1 (.NET) on 117 pages: the test fixtures,
 the broken-markup snippets of the .NET cross-check tests, extra edge cases (entities, raw text, comments, XML, custom
-elements, 600-deep nesting, Unicode whitespace), and every fixture with `</li> </p> </td> </tr>` left out, plus three
-copies of each with random end tags dropped, names upper-cased and the page cut off, and copies saved with CR LF and with a lone CR.
+elements, 600-deep nesting, Unicode whitespace, links of every kind, line breaks), and every fixture with
+`</li> </p> </td> </tr>` left out, plus three copies of each with random end tags dropped, names upper-cased and the page
+cut off, and copies saved with CR LF and with a lone CR.
 
-- `conformance_test.go`: every tag (over 15,000): names, parents, depths, positions (UTF-8 byte offsets), visible texts and
-  10 attribute values per tag must be identical.
+- `conformance_test.go`: every tag (over 15,000): names, parents, depths, positions (UTF-8 byte offsets), visible text,
+  text with line breaks, 10 attribute values, the opening tag source, next / previous tag and sibling, children, the
+  resolved href and src (against a page URL with an upper-case host and its default port), mailto: and tel: values,
+  and the text after the tag must be identical.
 - `conformance_query_test.go`: 569 queries, every string of the .NET XPath and CSS tests plus extra ones for the axes,
   functions and selectors. Whether each one compiles must be the same (119 are invalid); the 228 XPath and 222 CSS
   queries that compile are run on every page, on the document and from three tags of the page, and every CSS selector is
@@ -58,6 +84,11 @@ copies of each with random end tags dropped, names upper-cased and the page cut 
 
 All pass, with one documented exception (`knownDifferences`): on the page nested 600 levels deep, where the .NET result
 depends on the order of an unstable sort.
+
+Two intended differences: `TextLineBreaks` joins lines with `"\n"` on every OS (the .NET version uses
+`Environment.NewLine`, "\r\n" on Windows; the conformance data is compared with "\n"), and a missing value is `""`
+where the .NET version returns null. Links resolved against the page are written as .NET's `System.Uri` writes them
+(host in lower case, no default port, readable escapes); absolute links are returned as written, as in .NET.
 
 The expected output in `testdata/conformance/expected` is produced by `tools/conformance`: a small .NET program that
 references the z3l.FastHtmlParser package; `make_inputs.py` and `make_queries.py` build the pages and the queries.
@@ -93,10 +124,12 @@ The XPath engine builds node-sets per step; that is where its allocations come f
 ## Layout
 
 - `parse.go`: the scanner and the HTML5 optional-end-tag rules (port of `ParsingCore.cs`)
-- `attr.go`, `decode.go`, `text.go`: attributes, character references, visible text
-- `document.go`: `Document`, `Node`, `Query`, search and navigation
+- `attr.go`, `decode.go`, `text.go`, `textlines.go`: attributes, character references, visible text, text with line breaks
+- `document.go`: `Document`, `Node`, `Query`, search and navigation; `links.go`: href / src, mailto:, tel:
 - `css.go`: CSS selectors; `xpath.go`, `xpath_compile.go`: XPath 1.0
-- `names_gen.go`, `entities_gen.go`: generated from the C# sources by `go run ./internal/gen <path to src/z3l.FastHtmlParser>`
+- `shortcuts.go`, `shortcuts_gen.go`: the one-call shortcuts, generated by `go generate` (`internal/genshortcuts`)
+- `names_gen.go`, `attributes_gen.go`, `entities_gen.go`: generated from the C# sources by
+  `go run ./internal/gen <path to src/z3l.FastHtmlParser>`
 - `bench/`: benchmarks in their own module, so the library has no dependencies
 - `tools/conformance/`: builds the conformance data from the .NET version
 

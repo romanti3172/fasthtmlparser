@@ -23,6 +23,49 @@ type expectedTag struct {
 	InnerEnd   int32             `json:"innerEnd"`
 	Text       string            `json:"text"`
 	Attrs      map[string]string `json:"attrs"`
+	More       tagMore
+}
+
+// tagMore: the other per-tag results (text with line breaks, navigation, links).
+type tagMore struct {
+	TextLineBreaks  string `json:"textLineBreaks"`
+	Source          string `json:"source"`
+	Next            int    `json:"next"`
+	Previous        int    `json:"previous"`
+	NextSibling     int    `json:"nextSibling"`
+	PreviousSibling int    `json:"previousSibling"`
+	Children        string `json:"children"`
+	Href            string `json:"href"`
+	Src             string `json:"src"`
+	MailTo          string `json:"mailto"`
+	Tel             string `json:"tel"`
+	TextAfter       string `json:"textAfter"`
+	TextNoTagsAfter string `json:"textNoTagsAfter"`
+}
+
+// the page URL the .NET dump uses (tools/conformance/Program.cs)
+const conformancePageURL = "https://Example.com:443/catalog/page-1.html?sort=asc#top"
+
+func nodeIndex(n *Node) int {
+	if n == nil {
+		return -1
+	}
+	return n.Index()
+}
+
+func moreOf(n *Node) tagMore {
+	children := make([]string, 0)
+	for _, c := range n.Children() {
+		children = append(children, fmt.Sprint(c.Index()))
+	}
+	return tagMore{
+		TextLineBreaks: n.TextLineBreaks(), Source: n.Source(),
+		Next: nodeIndex(n.Next()), Previous: nodeIndex(n.Previous()),
+		NextSibling: nodeIndex(n.NextSibling()), PreviousSibling: nodeIndex(n.PreviousSibling()),
+		Children: strings.Join(children, ","),
+		Href:     n.Href(), Src: n.Src(), MailTo: n.HrefMailTo(), Tel: n.HrefTelephone(),
+		TextAfter: n.TextAfterTagUntilNextOne(), TextNoTagsAfter: n.TextNoTagsAfterTagUntilNextOne(),
+	}
 }
 
 // tagPos is everything but the attributes: comparable with ==.
@@ -52,8 +95,12 @@ func TestConformanceWithDotNet(t *testing.T) {
 			if err := json.Unmarshal(data, &expected); err != nil {
 				t.Fatal(err)
 			}
+			var more []tagMore // the same rows, read again for the other fields
+			if err := json.Unmarshal(data, &more); err != nil {
+				t.Fatal(err)
+			}
 
-			doc := ParseBytes(source)
+			doc := ParseWithURL(string(source), conformancePageURL)
 			var problems []string
 			if doc.Len() != len(expected) {
 				problems = append(problems, fmt.Sprintf("tags: %d, .NET: %d", doc.Len(), len(expected)))
@@ -70,6 +117,9 @@ func TestConformanceWithDotNet(t *testing.T) {
 					if v := n.Attr(attr); v != value {
 						problems = append(problems, fmt.Sprintf("[%d] <%s> @%s: %q, .NET: %q", i, n.Name(), attr, v, value))
 					}
+				}
+				if got := moreOf(n); got != more[i] {
+					problems = append(problems, fmt.Sprintf("[%d] <%s>\n  go:   %+v\n  .net: %+v", i, n.Name(), got, more[i]))
 				}
 			}
 			if len(problems) > 0 {

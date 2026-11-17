@@ -41,7 +41,7 @@ foreach (var file in Directory.GetFiles(input, "*.html").Order())
 {
     var name = Path.GetFileNameWithoutExtension(file);
     var source = File.ReadAllText(file, utf8);
-    var doc = new HtmlParser(source);
+    var doc = new HtmlParser(source, PageUrl);
 
     // byte offset of each char index
     var bytes = new int[source.Length + 1];
@@ -66,7 +66,23 @@ foreach (var file in Directory.GetFiles(input, "*.html").Order())
         ["innerEnd"] = t.InnerEnd == 0 ? 0 : Last(t.InnerEnd),
         ["text"] = t.Text() ?? "",
         ["attrs"] = attributes.ToDictionary(a => a, a => t.AttributeByName(a)),
+        // lines are joined with Environment.NewLine; the Go port uses "\n" on every OS
+        ["textLineBreaks"] = (t.TextLineBreaks() ?? "").Replace(Environment.NewLine, "\n"),
+        ["source"] = t.Source(),
+        ["next"] = Index(t.Next()),
+        ["previous"] = Index(t.Previous()),
+        ["nextSibling"] = Index(t.NextSibling()),
+        ["previousSibling"] = Index(t.PreviousSibling()),
+        ["children"] = string.Join(",", t.Children().Select(c => index[c])),
+        ["href"] = t.AttributeHref() ?? "",
+        ["src"] = t.AttributeSrc() ?? "",
+        ["mailto"] = t.AttributeHrefMailTo() ?? "",
+        ["tel"] = t.AttributeHrefTelephone() ?? "",
+        ["textAfter"] = t.TextAfterTagUntilNextOne() ?? "",
+        ["textNoTagsAfter"] = t.TextNoTagsAfterTagUntilNextOne() ?? "",
     }).ToList();
+
+    int Index(ParserTag? tag) => tag == null ? -1 : index[tag];
 
     File.WriteAllText(Path.Combine(output, name + ".json"), JsonSerializer.Serialize(rows), utf8);
 
@@ -127,5 +143,8 @@ static string Hash(List<string> values) =>
 
 partial class Program
 {
+    // The page URL for AttributeHref / AttributeSrc: relative links are resolved against it.
+    const string PageUrl = "https://Example.com:443/catalog/page-1.html?sort=asc#top";
+
     static readonly JsonSerializerOptions Indented = new() { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 }

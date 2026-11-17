@@ -10,6 +10,7 @@
 package fasthtml
 
 import (
+	"net/url"
 	"strings"
 	"sync/atomic"
 )
@@ -19,6 +20,8 @@ type Document struct {
 	source string
 	nodes  []Node
 	css    atomic.Pointer[cssTree] // sibling links and positions, built by the first selector that needs them
+	url    string
+	base   *url.URL // url parsed once, for resolving relative links; nil when there is none
 }
 
 // Node is one tag of a document. Positions are byte offsets into the document source.
@@ -44,6 +47,17 @@ func Parse(source string) *Document {
 
 // ParseBytes parses a page from bytes (copied once into a string).
 func ParseBytes(source []byte) *Document { return Parse(string(source)) }
+
+// ParseWithURL parses a page and records its URL: relative links (Href, Src) are resolved against it.
+func ParseWithURL(source, pageURL string) *Document {
+	doc := Parse(source)
+	doc.url = pageURL
+	doc.base = absoluteURL(pageURL)
+	return doc
+}
+
+// URL returns the page URL given to ParseWithURL, or "".
+func (d *Document) URL() string { return d.url }
 
 // Source returns the page source.
 func (d *Document) Source() string { return d.source }
@@ -148,7 +162,7 @@ func (n *Node) Parent() *Node {
 	return &n.doc.nodes[n.parent]
 }
 
-// Children returns the direct children.
+// Children returns the direct children: the tags inside n one level deeper.
 func (n *Node) Children() []*Node {
 	if n == nil {
 		return nil
@@ -156,38 +170,125 @@ func (n *Node) Children() []*Node {
 	var children []*Node
 	nodes := n.doc.nodes
 	for i := int(n.index) + 1; i < len(nodes) && nodes[i].end <= n.end; i++ {
-		if nodes[i].parent == n.index {
+		if nodes[i].depth == n.depth+1 {
 			children = append(children, &nodes[i])
 		}
 	}
 	return children
 }
 
-// NextSibling returns the next tag with the same parent, or nil.
-func (n *Node) NextSibling() *Node {
+// Next returns the tag that follows n in document order (its first child, if it has one), or nil.
+func (n *Node) Next() *Node {
+	if n == nil || int(n.index)+1 >= len(n.doc.nodes) {
+		return nil
+	}
+	return &n.doc.nodes[n.index+1]
+}
+
+// NextMatching returns the first tag after the end of n that matches q (tags inside n are skipped), or nil.
+func (n *Node) NextMatching(q Query) *Node {
 	if n == nil {
 		return nil
 	}
 	nodes := n.doc.nodes
 	for i := int(n.index) + 1; i < len(nodes); i++ {
-		if nodes[i].depth < n.depth {
-			return nil
-		}
-		if nodes[i].parent == n.parent {
+		if nodes[i].start > n.end && q.Matches(&nodes[i]) {
 			return &nodes[i]
 		}
 	}
 	return nil
 }
 
+// Previous returns the tag before n in document order, or nil.
+func (n *Node) Previous() *Node {
+	if n == nil || n.index < 1 {
+		return nil
+	}
+	return &n.doc.nodes[n.index-1]
+}
+
+// NextSibling returns the next tag at the same level inside the same parent, or nil.
+func (n *Node) NextSibling() *Node { return n.NextSiblingMatching(Any()) }
+
 // NextSiblingMatching returns the next sibling that matches q, or nil.
 func (n *Node) NextSiblingMatching(q Query) *Node {
-	for s := n.NextSibling(); s != nil; s = s.NextSibling() {
-		if q.Matches(s) {
-			return s
+	if n == nil {
+		return nil
+	}
+	// deeper tags are inside the following siblings; a shallower one ends the parent
+	for next := n.Next(); next != nil && next.depth >= n.depth; next = next.Next() {
+		if next.depth == n.depth && q.Matches(next) {
+			return next
 		}
 	}
 	return nil
+}
+
+// PreviousSibling returns the previous tag at the same level inside the same parent, or nil.
+func (n *Node) PreviousSibling() *Node { return n.PreviousSiblingMatching(Any()) }
+
+// PreviousSiblingMatching returns the nearest previous sibling that matches q, or nil.
+func (n *Node) PreviousSiblingMatching(q Query) *Node {
+	if n == nil {
+		return nil
+	}
+	// deeper tags are inside the previous siblings; a shallower one is the parent
+	for prev := n.Previous(); prev != nil && prev.depth >= n.depth; prev = prev.Previous() {
+		if prev.depth == n.depth && q.Matches(prev) {
+			return prev
+		}
+	}
+	return nil
+}
+
+// TextAfterTagUntilNextOne returns the source text right after n up to the next '<' (or the end of the page).
+func (n *Node) TextAfterTagUntilNextOne() string {
+	if n == nil {
+		return ""
+	}
+	from := int(n.end) + 1
+	if from >= len(n.doc.source) {
+		return ""
+	}
+	rest := n.doc.source[from:]
+	if next := strings.IndexByte(rest, '<'); next >= 0 {
+		return rest[:next]
+	}
+	return rest
+}
+
+// TextNoTagsAfterTagUntilNextOne is TextAfterTagUntilNextOne as visible text: entities decoded, whitespace collapsed.
+func (n *Node) TextNoTagsAfterTagUntilNextOne() string {
+	return clearTags(n.TextAfterTagUntilNextOne())
+}
+
+// TextAfterUntil returns the source between the end of n and the next tag that matches q;
+// "" when there is none.
+func (n *Node) TextAfterUntil(q Query) string {
+	until := n.NextMatching(q)
+	if until == nil {
+		return ""
+	}
+	return n.doc.source[n.end+1 : until.start]
+}
+
+// Source returns the opening tag without '<' and '>': the name and the attributes.
+func (n *Node) Source() string {
+	if n == nil {
+		return ""
+	}
+	src := n.doc.source
+	start, end := int(n.start), int(n.end)
+	var length int
+	switch {
+	case n.innerStart > 0 && n.innerEnd > 0:
+		length = int(n.innerStart) - start - 2
+	case end > 0 && src[end-1] == '/':
+		length = end - start - 2
+	default:
+		length = end - start - 1
+	}
+	return strings.TrimSpace(src[start+1 : start+1+length])
 }
 
 // ParentMatching returns the nearest enclosing tag that matches q, or nil.
@@ -264,8 +365,8 @@ func findAll(nodes []Node, first int, end int32, q Query) []*Node {
 	return result
 }
 
-// Query selects tags by name and, optionally, class, id, attribute value and visible text.
-// It is a small value: build it inline, searching allocates nothing.
+// Query selects tags by name and, optionally, class, id, attribute value, visible text, inner HTML and
+// the source of the opening tag. It is a small value: build it inline, searching allocates nothing.
 type Query struct {
 	key       int16 // Tag+1, 0: by name or any
 	name      string
@@ -274,7 +375,13 @@ type Query struct {
 	attr      string
 	attrValue string
 	text      string
+	rare      *rareCriteria // the criteria shortcuts use now and then
 	has       uint8
+}
+
+type rareCriteria struct {
+	idStartsWith, textStartsWith, body, bodyStartsWith, source string
+	has                                                        uint8
 }
 
 const (
@@ -282,7 +389,52 @@ const (
 	hasID
 	hasAttr
 	hasText
+	hasRare
 )
+
+const (
+	hasIDStartsWith uint8 = 1 << iota
+	hasTextStartsWith
+	hasBody
+	hasBodyStartsWith
+	hasSource
+)
+
+func (q Query) withRare(set func(r *rareCriteria)) Query {
+	r := rareCriteria{}
+	if q.rare != nil {
+		r = *q.rare // a copy: queries are values
+	}
+	set(&r)
+	q.rare = &r
+	q.has |= hasRare
+	return q
+}
+
+// IDStartsWith adds a criterion: the decoded id starts with prefix.
+func (q Query) IDStartsWith(prefix string) Query {
+	return q.withRare(func(r *rareCriteria) { r.idStartsWith = prefix; r.has |= hasIDStartsWith })
+}
+
+// TextStartsWith adds a criterion: the visible text starts with prefix.
+func (q Query) TextStartsWith(prefix string) Query {
+	return q.withRare(func(r *rareCriteria) { r.textStartsWith = prefix; r.has |= hasTextStartsWith })
+}
+
+// Body adds a criterion: the inner HTML (trimmed) equals body.
+func (q Query) Body(body string) Query {
+	return q.withRare(func(r *rareCriteria) { r.body = body; r.has |= hasBody })
+}
+
+// BodyStartsWith adds a criterion: the inner HTML (trimmed) starts with prefix.
+func (q Query) BodyStartsWith(prefix string) Query {
+	return q.withRare(func(r *rareCriteria) { r.bodyStartsWith = prefix; r.has |= hasBodyStartsWith })
+}
+
+// Source adds a criterion: the opening tag without '<' and '>' (see Node.Source) equals source.
+func (q Query) Source(source string) Query {
+	return q.withRare(func(r *rareCriteria) { r.source = source; r.has |= hasSource })
+}
 
 // By selects tags with a known name.
 func By(tag Tag) Query { return Query{key: int16(tag) + 1} }
@@ -338,9 +490,35 @@ func (q Query) Matches(n *Node) bool {
 	if q.has&hasClass != 0 && !n.HasClass(q.class) {
 		return false
 	}
+	r := q.rare
+	if r != nil {
+		if r.has&hasIDStartsWith != 0 && !attrStartsWith(n.attrRaw(AttrId), r.idStartsWith) {
+			return false
+		}
+		if r.has&hasSource != 0 && n.Source() != r.source {
+			return false
+		}
+		if r.has&hasBody != 0 && n.Body() != r.body {
+			return false
+		}
+		if r.has&hasBodyStartsWith != 0 && !strings.HasPrefix(n.Body(), r.bodyStartsWith) {
+			return false
+		}
+	}
 	// the text last: it is the most expensive check
 	if q.has&hasText != 0 && !n.isText(q.text) {
 		return false
 	}
+	if r != nil && r.has&hasTextStartsWith != 0 && !strings.HasPrefix(n.Text(), r.textStartsWith) {
+		return false
+	}
 	return true
+}
+
+// attrStartsWith: whether the decoded value starts with prefix; it allocates only when the raw value has '&' or CR.
+func attrStartsWith(raw, prefix string) bool {
+	if needsDecoding(raw) {
+		raw = decodeHTML(raw, true)
+	}
+	return strings.HasPrefix(raw, prefix)
 }
