@@ -1,5 +1,8 @@
 # fasthtmlparser
 
+[![CI](https://github.com/romanti3172/fasthtmlparser/actions/workflows/ci.yml/badge.svg)](https://github.com/romanti3172/fasthtmlparser/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/romanti3172/fasthtmlparser.svg)](https://pkg.go.dev/github.com/romanti3172/fasthtmlparser)
+
 Go port of [z3l.FastHtmlParser](https://github.com/romanti3172/z3l.FastHtmlParser): a fast, low-allocation
 HTML / XML parser for scraping. The whole API is ported: the parser, attributes, HTML5 entities, visible text and text
 with line breaks, `Find` / `FindAll`, navigation, links, **XPath 1.0**, **CSS selectors** and the one-call shortcuts.

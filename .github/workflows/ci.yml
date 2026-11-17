@@ -11,6 +11,33 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # the oldest Go the module declares in go.mod, and the current one
+        go: ["1.23.x", stable]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Vet and test
+        run: |
+          go vet ./...
+          go test ./...
+
+      # The benchmarks live in their own module (it needs a newer Go for testing.B.Loop);
+      # this checks that every library extracts the same records.
+      - name: Bench module
+        if: matrix.go == 'stable'
+        working-directory: bench
+        run: |
+          go vet ./...
+          go test -run SameRecords .
+
+  lint:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -18,14 +45,13 @@ jobs:
         with:
           go-version: stable
 
-      - name: Vet and test
-        run: |
-          go vet ./...
-          go test ./...
+      # golangci-lint with .golangci.yml: errcheck, govet, ineffassign, staticcheck, unused, misspell, gofmt
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15.0
 
-      # The benchmarks live in their own module; this checks that both libraries extract the same records.
-      - name: Bench module
-        working-directory: bench
-        run: |
-          go vet ./...
-          go test -run SameRecords .
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15.0
+          working-directory: bench
+          args: --config ../.golangci.yml

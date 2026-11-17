@@ -1047,7 +1047,7 @@ func (c *cssCompiler) parseNth() (int, int) {
 	var text strings.Builder
 	for c.p < len(c.s) {
 		ch := c.s[c.p]
-		if !(ch == '+' || ch == '-' || ch == 'n' || ch == 'N' || ch >= '0' && ch <= '9' || isCSSSpace(ch)) {
+		if !isNthChar(ch) {
 			break
 		}
 		if ch == 'N' {
@@ -1088,6 +1088,11 @@ func (c *cssCompiler) parseNth() (int, int) {
 	c.p = start
 	c.fail("An+B expected (odd, even, 3, 2n+1, -n+3)")
 	return 0, 0
+}
+
+// isNthChar: a char an An+B expression is written with (whitespace included: "2n + 1").
+func isNthChar(ch byte) bool {
+	return ch == '+' || ch == '-' || ch == 'n' || ch == 'N' || ch >= '0' && ch <= '9' || isCSSSpace(ch)
 }
 
 func parseInt(s string) (int, bool) {
@@ -1154,11 +1159,11 @@ func (c *cssCompiler) readString() string {
 			c.fail("unterminated string")
 		}
 		ch := c.s[c.p]
-		switch {
-		case ch == quote:
+		switch ch {
+		case quote:
 			c.p++
 			return b.String()
-		case ch == '\\':
+		case '\\':
 			switch {
 			case c.p+1 < len(c.s) && (c.s[c.p+1] == '\n' || c.s[c.p+1] == '\f'):
 				c.p += 2 // an escaped line break continues the string
