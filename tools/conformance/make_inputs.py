@@ -38,4 +38,12 @@ for p in pages:
         t = re.sub(r'<[a-zA-Z]', lambda m: m.group(0)[0] + m.group(0)[1].upper() if rnd.random() < 0.05 else m.group(0), t)
         t = t[: rnd.randrange(len(t) // 2, len(t))]
         w(f'mut{k}-{base}.html', t)
+# pages saved on Windows (CR LF) and with a lone CR: values must read the line breaks as LF
+for p in pages:
+    base = os.path.basename(os.path.dirname(p)) + '-' + os.path.basename(p)[:-5]
+    if base in ('books-category-mystery', 'books-product-light-in-the-attic', 'webscraper-product-31'):
+        s = open(p, encoding='utf-8').read()
+        w(f'crlf-{base}.html', s.replace('\n', '\r\n'))
+        if base == 'webscraper-product-31':
+            w(f'cr-{base}.html', s.replace('\n', '\r'))
 print(len(snips), 'snippets,', len(os.listdir(out)), 'inputs')

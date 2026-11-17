@@ -9,12 +9,16 @@
 //	price := doc.Find(fasthtml.By(fasthtml.TagDiv).ID("main")).Find(fasthtml.By(fasthtml.TagSpan).Class("price")).Text()
 package fasthtml
 
-import "strings"
+import (
+	"strings"
+	"sync/atomic"
+)
 
 // Document is a parsed page.
 type Document struct {
 	source string
 	nodes  []Node
+	css    atomic.Pointer[cssTree] // sibling links and positions, built by the first selector that needs them
 }
 
 // Node is one tag of a document. Positions are byte offsets into the document source.

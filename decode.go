@@ -9,12 +9,41 @@ import (
 // the legacy names without ';', numeric references with or without ';', and the spec replacements
 // (0, surrogates, > U+10FFFF → U+FFFD; 0x80–0x9F → Windows-1252).
 
-// DecodeHTML decodes character references in text.
+// DecodeHTML decodes character references in text; CR LF and a lone CR become LF.
 func DecodeHTML(s string) string { return decodeHTML(s, false) }
 
+// needsDecoding: a value read from the page differs from its source when it has a character reference
+// or a CR (HTML reads CR LF and a lone CR as LF).
+func needsDecoding(s string) bool {
+	return strings.IndexByte(s, '&') >= 0 || strings.IndexByte(s, '\r') >= 0
+}
+
+// normalizeNewlines: HTML input stream preprocessing, CR LF and a lone CR become LF.
+func normalizeNewlines(s string) string {
+	if strings.IndexByte(s, '\r') < 0 {
+		return s
+	}
+	out := make([]byte, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		if s[i] != '\r' {
+			out = append(out, s[i])
+			continue
+		}
+		out = append(out, '\n')
+		if i+1 < len(s) && s[i+1] == '\n' {
+			i++
+		}
+	}
+	return string(out)
+}
+
 // decodeHTML: with inAttribute, a legacy name without ';' followed by '=' or an alphanumeric is left as is
-// (so "?a=1&copy=2" stays intact). Without '&' the input is returned as is.
+// (so "?a=1&copy=2" stays intact). Without '&' and CR the input is returned as is.
 func decodeHTML(s string, inAttribute bool) string {
+	// Line breaks first, as a browser reads the page; a CR written as "&#13;" is decoded after that and stays.
+	if strings.IndexByte(s, '\r') >= 0 {
+		s = normalizeNewlines(s)
+	}
 	amp := strings.IndexByte(s, '&')
 	if amp < 0 {
 		return s

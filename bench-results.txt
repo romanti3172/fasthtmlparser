@@ -2,62 +2,80 @@ goos: windows
 goarch: amd64
 pkg: github.com/romanti3172/z3l.FastHtmlParser.Go/bench
 cpu: AMD Ryzen 7 3800X 8-Core Processor             
-BenchmarkParse/quotes_11KB/fasthtml-12         	   41898	     28177 ns/op	 402.66 MB/s	    9532 B/op	       2 allocs/op
-BenchmarkParse/quotes_11KB/fasthtml-12         	   40452	     28648 ns/op	 396.04 MB/s	    9532 B/op	       2 allocs/op
-BenchmarkParse/quotes_11KB/fasthtml-12         	   43801	     27320 ns/op	 415.30 MB/s	    9531 B/op	       2 allocs/op
-BenchmarkParse/quotes_11KB/x-net-html-12       	    4284	    289062 ns/op	  39.25 MB/s	   96018 B/op	    2498 allocs/op
-BenchmarkParse/quotes_11KB/x-net-html-12       	    4872	    311879 ns/op	  36.38 MB/s	   96017 B/op	    2498 allocs/op
-BenchmarkParse/quotes_11KB/x-net-html-12       	    4899	    298573 ns/op	  38.00 MB/s	   96016 B/op	    2498 allocs/op
-BenchmarkParse/quotes_11KB/goquery-12          	    4624	    297513 ns/op	  38.14 MB/s	   96120 B/op	    2501 allocs/op
-BenchmarkParse/quotes_11KB/goquery-12          	    4527	    304687 ns/op	  37.24 MB/s	   96121 B/op	    2501 allocs/op
-BenchmarkParse/quotes_11KB/goquery-12          	    4329	    300700 ns/op	  37.73 MB/s	   96120 B/op	    2501 allocs/op
-BenchmarkParse/laptops_38KB/fasthtml-12        	   13082	     90478 ns/op	 427.09 MB/s	   24671 B/op	       2 allocs/op
-BenchmarkParse/laptops_38KB/fasthtml-12        	   13808	     88027 ns/op	 438.98 MB/s	   24721 B/op	       2 allocs/op
-BenchmarkParse/laptops_38KB/fasthtml-12        	   13276	     89124 ns/op	 433.58 MB/s	   24698 B/op	       2 allocs/op
-BenchmarkParse/laptops_38KB/x-net-html-12      	    1186	   1019245 ns/op	  37.91 MB/s	  301886 B/op	    7886 allocs/op
-BenchmarkParse/laptops_38KB/x-net-html-12      	    1255	   1001387 ns/op	  38.59 MB/s	  301883 B/op	    7886 allocs/op
-BenchmarkParse/laptops_38KB/x-net-html-12      	    1332	    969210 ns/op	  39.87 MB/s	  301883 B/op	    7886 allocs/op
-BenchmarkParse/laptops_38KB/goquery-12         	    1388	   1000919 ns/op	  38.61 MB/s	  301986 B/op	    7889 allocs/op
-BenchmarkParse/laptops_38KB/goquery-12         	    1287	    971148 ns/op	  39.79 MB/s	  301987 B/op	    7889 allocs/op
-BenchmarkParse/laptops_38KB/goquery-12         	    1177	    994100 ns/op	  38.87 MB/s	  301987 B/op	    7889 allocs/op
-BenchmarkParse/books_51KB/fasthtml-12          	   12028	     98972 ns/op	 540.90 MB/s	   32961 B/op	       2 allocs/op
-BenchmarkParse/books_51KB/fasthtml-12          	   12429	     98120 ns/op	 545.59 MB/s	   32964 B/op	       2 allocs/op
-BenchmarkParse/books_51KB/fasthtml-12          	   12416	     95976 ns/op	 557.78 MB/s	   32909 B/op	       2 allocs/op
-BenchmarkParse/books_51KB/x-net-html-12        	    1024	    980715 ns/op	  54.59 MB/s	  287225 B/op	    6707 allocs/op
-BenchmarkParse/books_51KB/x-net-html-12        	    1226	    980781 ns/op	  54.58 MB/s	  287225 B/op	    6707 allocs/op
-BenchmarkParse/books_51KB/x-net-html-12        	    1198	    984458 ns/op	  54.38 MB/s	  287226 B/op	    6707 allocs/op
-BenchmarkParse/books_51KB/goquery-12           	    1354	    983026 ns/op	  54.46 MB/s	  287329 B/op	    6710 allocs/op
-BenchmarkParse/books_51KB/goquery-12           	    1252	    954608 ns/op	  56.08 MB/s	  287330 B/op	    6710 allocs/op
-BenchmarkParse/books_51KB/goquery-12           	    1293	   1017979 ns/op	  52.59 MB/s	  287329 B/op	    6710 allocs/op
-BenchmarkParse/books_x10_510KB/fasthtml-12     	    1200	   1013547 ns/op	 528.18 MB/s	  321709 B/op	       2 allocs/op
-BenchmarkParse/books_x10_510KB/fasthtml-12     	    1066	   1001996 ns/op	 534.27 MB/s	  320477 B/op	       2 allocs/op
-BenchmarkParse/books_x10_510KB/fasthtml-12     	    1368	    944909 ns/op	 566.55 MB/s	  320890 B/op	       2 allocs/op
-BenchmarkParse/books_x10_510KB/x-net-html-12   	     127	   9313628 ns/op	  57.48 MB/s	 2820196 B/op	   66895 allocs/op
-BenchmarkParse/books_x10_510KB/x-net-html-12   	     130	   9183132 ns/op	  58.30 MB/s	 2820239 B/op	   66895 allocs/op
-BenchmarkParse/books_x10_510KB/x-net-html-12   	     120	   9892641 ns/op	  54.11 MB/s	 2820208 B/op	   66895 allocs/op
-BenchmarkParse/books_x10_510KB/goquery-12      	     129	   9204034 ns/op	  58.16 MB/s	 2820308 B/op	   66898 allocs/op
-BenchmarkParse/books_x10_510KB/goquery-12      	     128	   9299895 ns/op	  57.56 MB/s	 2820306 B/op	   66898 allocs/op
-BenchmarkParse/books_x10_510KB/goquery-12      	     124	   9660112 ns/op	  55.42 MB/s	 2820301 B/op	   66898 allocs/op
-BenchmarkParse/books_no_end_tags/fasthtml-12   	   10000	    101481 ns/op	 521.47 MB/s	   32931 B/op	       2 allocs/op
-BenchmarkParse/books_no_end_tags/fasthtml-12   	   10000	    100285 ns/op	 527.69 MB/s	   32899 B/op	       2 allocs/op
-BenchmarkParse/books_no_end_tags/fasthtml-12   	   12536	     96082 ns/op	 550.77 MB/s	   32905 B/op	       2 allocs/op
-BenchmarkParse/books_no_end_tags/x-net-html-12 	    1286	    916490 ns/op	  57.74 MB/s	  270906 B/op	    6306 allocs/op
-BenchmarkParse/books_no_end_tags/x-net-html-12 	    1198	    915831 ns/op	  57.78 MB/s	  270906 B/op	    6306 allocs/op
-BenchmarkParse/books_no_end_tags/x-net-html-12 	    1278	    889073 ns/op	  59.52 MB/s	  270906 B/op	    6306 allocs/op
-BenchmarkParse/books_no_end_tags/goquery-12    	    1405	    924019 ns/op	  57.27 MB/s	  271010 B/op	    6309 allocs/op
-BenchmarkParse/books_no_end_tags/goquery-12    	    1470	    908884 ns/op	  58.22 MB/s	  271010 B/op	    6309 allocs/op
-BenchmarkParse/books_no_end_tags/goquery-12    	    1406	    886073 ns/op	  59.72 MB/s	  271009 B/op	    6309 allocs/op
-BenchmarkScrape/books/fasthtml-12              	   10000	    126467 ns/op	   37758 B/op	      15 allocs/op
-BenchmarkScrape/books/fasthtml-12              	   10000	    120417 ns/op	   37793 B/op	      15 allocs/op
-BenchmarkScrape/books/fasthtml-12              	   10000	    125193 ns/op	   37733 B/op	      15 allocs/op
-BenchmarkScrape/books/goquery-12               	    1177	   1079302 ns/op	  306986 B/op	    7391 allocs/op
-BenchmarkScrape/books/goquery-12               	    1117	   1101977 ns/op	  306986 B/op	    7391 allocs/op
-BenchmarkScrape/books/goquery-12               	    1120	   1077539 ns/op	  306986 B/op	    7391 allocs/op
-BenchmarkScrape/quotes/fasthtml-12             	   26577	     44969 ns/op	   13526 B/op	      58 allocs/op
-BenchmarkScrape/quotes/fasthtml-12             	   26043	     45691 ns/op	   13537 B/op	      58 allocs/op
-BenchmarkScrape/quotes/fasthtml-12             	   25849	     45146 ns/op	   13534 B/op	      58 allocs/op
-BenchmarkScrape/quotes/goquery-12              	    4095	    334964 ns/op	  108825 B/op	    2921 allocs/op
-BenchmarkScrape/quotes/goquery-12              	    3662	    323547 ns/op	  108824 B/op	    2921 allocs/op
-BenchmarkScrape/quotes/goquery-12              	    3756	    336939 ns/op	  108824 B/op	    2921 allocs/op
+BenchmarkParse/quotes_11KB/fasthtml-12         	   43591	     28370 ns/op	 399.93 MB/s	    9534 B/op	       2 allocs/op
+BenchmarkParse/quotes_11KB/fasthtml-12         	   45494	     28373 ns/op	 399.88 MB/s	    9537 B/op	       2 allocs/op
+BenchmarkParse/quotes_11KB/fasthtml-12         	   42806	     27518 ns/op	 412.31 MB/s	    9532 B/op	       2 allocs/op
+BenchmarkParse/quotes_11KB/x-net-html-12       	    4771	    307105 ns/op	  36.95 MB/s	   96018 B/op	    2498 allocs/op
+BenchmarkParse/quotes_11KB/x-net-html-12       	    4122	    298622 ns/op	  37.99 MB/s	   96016 B/op	    2498 allocs/op
+BenchmarkParse/quotes_11KB/x-net-html-12       	    4580	    324076 ns/op	  35.01 MB/s	   96016 B/op	    2498 allocs/op
+BenchmarkParse/quotes_11KB/goquery-12          	    4759	    308185 ns/op	  36.82 MB/s	   96120 B/op	    2501 allocs/op
+BenchmarkParse/quotes_11KB/goquery-12          	    4590	    301987 ns/op	  37.57 MB/s	   96120 B/op	    2501 allocs/op
+BenchmarkParse/quotes_11KB/goquery-12          	    4598	    309801 ns/op	  36.62 MB/s	   96120 B/op	    2501 allocs/op
+BenchmarkParse/laptops_38KB/fasthtml-12        	   13866	     85727 ns/op	 450.76 MB/s	   24697 B/op	       2 allocs/op
+BenchmarkParse/laptops_38KB/fasthtml-12        	   14155	     86237 ns/op	 448.09 MB/s	   24743 B/op	       2 allocs/op
+BenchmarkParse/laptops_38KB/fasthtml-12        	   13116	     91328 ns/op	 423.11 MB/s	   24701 B/op	       2 allocs/op
+BenchmarkParse/laptops_38KB/x-net-html-12      	    1244	   1052814 ns/op	  36.70 MB/s	  301883 B/op	    7886 allocs/op
+BenchmarkParse/laptops_38KB/x-net-html-12      	    1256	    983168 ns/op	  39.30 MB/s	  301882 B/op	    7886 allocs/op
+BenchmarkParse/laptops_38KB/x-net-html-12      	    1322	   1033603 ns/op	  37.39 MB/s	  301882 B/op	    7886 allocs/op
+BenchmarkParse/laptops_38KB/goquery-12         	    1347	    989667 ns/op	  39.05 MB/s	  301990 B/op	    7889 allocs/op
+BenchmarkParse/laptops_38KB/goquery-12         	    1155	   1000781 ns/op	  38.61 MB/s	  301987 B/op	    7889 allocs/op
+BenchmarkParse/laptops_38KB/goquery-12         	    1064	    978844 ns/op	  39.48 MB/s	  301986 B/op	    7889 allocs/op
+BenchmarkParse/books_51KB/fasthtml-12          	   12224	     98400 ns/op	 544.04 MB/s	   32910 B/op	       2 allocs/op
+BenchmarkParse/books_51KB/fasthtml-12          	   10000	    101145 ns/op	 529.28 MB/s	   32969 B/op	       2 allocs/op
+BenchmarkParse/books_51KB/fasthtml-12          	   10000	    101962 ns/op	 525.04 MB/s	   32968 B/op	       2 allocs/op
+BenchmarkParse/books_51KB/x-net-html-12        	    1311	   1003198 ns/op	  53.36 MB/s	  287225 B/op	    6707 allocs/op
+BenchmarkParse/books_51KB/x-net-html-12        	    1149	   1008329 ns/op	  53.09 MB/s	  287226 B/op	    6707 allocs/op
+BenchmarkParse/books_51KB/x-net-html-12        	    1264	   1004753 ns/op	  53.28 MB/s	  287225 B/op	    6707 allocs/op
+BenchmarkParse/books_51KB/goquery-12           	    1218	    955600 ns/op	  56.02 MB/s	  287330 B/op	    6710 allocs/op
+BenchmarkParse/books_51KB/goquery-12           	    1292	    973012 ns/op	  55.02 MB/s	  287330 B/op	    6710 allocs/op
+BenchmarkParse/books_51KB/goquery-12           	    1222	   1018932 ns/op	  52.54 MB/s	  287329 B/op	    6710 allocs/op
+BenchmarkParse/books_x10_510KB/fasthtml-12     	    1191	    937676 ns/op	 570.92 MB/s	  320381 B/op	       2 allocs/op
+BenchmarkParse/books_x10_510KB/fasthtml-12     	    1330	    935297 ns/op	 572.37 MB/s	  320904 B/op	       2 allocs/op
+BenchmarkParse/books_x10_510KB/fasthtml-12     	    1155	   1029958 ns/op	 519.77 MB/s	  321085 B/op	       2 allocs/op
+BenchmarkParse/books_x10_510KB/x-net-html-12   	     123	   9707094 ns/op	  55.15 MB/s	 2820202 B/op	   66895 allocs/op
+BenchmarkParse/books_x10_510KB/x-net-html-12   	     127	   9532569 ns/op	  56.16 MB/s	 2820194 B/op	   66895 allocs/op
+BenchmarkParse/books_x10_510KB/x-net-html-12   	     120	   9914498 ns/op	  54.00 MB/s	 2820240 B/op	   66895 allocs/op
+BenchmarkParse/books_x10_510KB/goquery-12      	     123	   9734637 ns/op	  54.99 MB/s	 2820306 B/op	   66898 allocs/op
+BenchmarkParse/books_x10_510KB/goquery-12      	     124	   9629114 ns/op	  55.60 MB/s	 2820298 B/op	   66898 allocs/op
+BenchmarkParse/books_x10_510KB/goquery-12      	     123	   9679192 ns/op	  55.31 MB/s	 2820306 B/op	   66898 allocs/op
+BenchmarkParse/books_no_end_tags/fasthtml-12   	   12836	     94963 ns/op	 557.26 MB/s	   32928 B/op	       2 allocs/op
+BenchmarkParse/books_no_end_tags/fasthtml-12   	   12546	     96960 ns/op	 545.78 MB/s	   32925 B/op	       2 allocs/op
+BenchmarkParse/books_no_end_tags/fasthtml-12   	   10000	    100064 ns/op	 528.85 MB/s	   32877 B/op	       2 allocs/op
+BenchmarkParse/books_no_end_tags/x-net-html-12 	    1375	    927399 ns/op	  57.06 MB/s	  270906 B/op	    6306 allocs/op
+BenchmarkParse/books_no_end_tags/x-net-html-12 	    1438	    883118 ns/op	  59.92 MB/s	  270906 B/op	    6306 allocs/op
+BenchmarkParse/books_no_end_tags/x-net-html-12 	    1165	    968446 ns/op	  54.64 MB/s	  270905 B/op	    6306 allocs/op
+BenchmarkParse/books_no_end_tags/goquery-12    	    1394	    935608 ns/op	  56.56 MB/s	  271010 B/op	    6309 allocs/op
+BenchmarkParse/books_no_end_tags/goquery-12    	    1269	    923553 ns/op	  57.30 MB/s	  271010 B/op	    6309 allocs/op
+BenchmarkParse/books_no_end_tags/goquery-12    	    1478	    932802 ns/op	  56.73 MB/s	  271010 B/op	    6309 allocs/op
+BenchmarkScrape/books/fasthtml-12              	    9986	    121790 ns/op	   37779 B/op	      15 allocs/op
+BenchmarkScrape/books/fasthtml-12              	   10000	    122536 ns/op	   37872 B/op	      15 allocs/op
+BenchmarkScrape/books/fasthtml-12              	   10000	    122302 ns/op	   37769 B/op	      15 allocs/op
+BenchmarkScrape/books/goquery-12               	    1125	   1126375 ns/op	  306985 B/op	    7391 allocs/op
+BenchmarkScrape/books/goquery-12               	    1059	   1139108 ns/op	  306986 B/op	    7391 allocs/op
+BenchmarkScrape/books/goquery-12               	    1155	   1088689 ns/op	  306985 B/op	    7391 allocs/op
+BenchmarkScrape/quotes/fasthtml-12             	   28196	     42874 ns/op	   13522 B/op	      58 allocs/op
+BenchmarkScrape/quotes/fasthtml-12             	   27876	     42935 ns/op	   13529 B/op	      58 allocs/op
+BenchmarkScrape/quotes/fasthtml-12             	   25676	     46128 ns/op	   13516 B/op	      58 allocs/op
+BenchmarkScrape/quotes/goquery-12              	    3673	    330009 ns/op	  108824 B/op	    2921 allocs/op
+BenchmarkScrape/quotes/goquery-12              	    4046	    333978 ns/op	  108824 B/op	    2921 allocs/op
+BenchmarkScrape/quotes/goquery-12              	    3958	    325995 ns/op	  108824 B/op	    2921 allocs/op
+BenchmarkScrapeQueries/books/fasthtml_xpath-12 	    5306	    260373 ns/op	  128045 B/op	    1943 allocs/op
+BenchmarkScrapeQueries/books/fasthtml_xpath-12 	    4004	    276955 ns/op	  128400 B/op	    1943 allocs/op
+BenchmarkScrapeQueries/books/fasthtml_xpath-12 	    4768	    259458 ns/op	  128425 B/op	    1943 allocs/op
+BenchmarkScrapeQueries/books/htmlquery_xpath-12         	     984	   1184384 ns/op	  362037 B/op	    9158 allocs/op
+BenchmarkScrapeQueries/books/htmlquery_xpath-12         	    1038	   1171082 ns/op	  362019 B/op	    9158 allocs/op
+BenchmarkScrapeQueries/books/htmlquery_xpath-12         	     957	   1169885 ns/op	  362027 B/op	    9158 allocs/op
+BenchmarkScrapeQueries/books/fasthtml_css-12            	   10000	    128187 ns/op	   39818 B/op	     136 allocs/op
+BenchmarkScrapeQueries/books/fasthtml_css-12            	    9952	    127771 ns/op	   40015 B/op	     136 allocs/op
+BenchmarkScrapeQueries/books/fasthtml_css-12            	    9703	    129387 ns/op	   39742 B/op	     136 allocs/op
+BenchmarkScrapeQueries/books/goquery_css-12             	    1098	   1246286 ns/op	  306986 B/op	    7391 allocs/op
+BenchmarkScrapeQueries/books/goquery_css-12             	    1197	   1079825 ns/op	  306986 B/op	    7391 allocs/op
+BenchmarkScrapeQueries/books/goquery_css-12             	    1162	   1078272 ns/op	  306986 B/op	    7391 allocs/op
+BenchmarkScrapeQueries/quotes/fasthtml_css-12           	   25201	     46597 ns/op	   14454 B/op	     109 allocs/op
+BenchmarkScrapeQueries/quotes/fasthtml_css-12           	   25262	     47391 ns/op	   14460 B/op	     109 allocs/op
+BenchmarkScrapeQueries/quotes/fasthtml_css-12           	   25338	     46250 ns/op	   14457 B/op	     109 allocs/op
+BenchmarkScrapeQueries/quotes/goquery_css-12            	    3897	    320530 ns/op	  108824 B/op	    2921 allocs/op
+BenchmarkScrapeQueries/quotes/goquery_css-12            	    3798	    326959 ns/op	  108825 B/op	    2921 allocs/op
+BenchmarkScrapeQueries/quotes/goquery_css-12            	    3814	    322466 ns/op	  108825 B/op	    2921 allocs/op
 PASS
-ok  	github.com/romanti3172/z3l.FastHtmlParser.Go/bench	70.655s
+ok  	github.com/romanti3172/z3l.FastHtmlParser.Go/bench	93.599s

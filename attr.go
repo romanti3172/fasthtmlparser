@@ -17,7 +17,7 @@ func (n *Node) HasClass(class string) bool {
 		return false
 	}
 	value := n.attrRaw("class")
-	if strings.IndexByte(value, '&') >= 0 {
+	if needsDecoding(value) {
 		value = decodeHTML(value, true)
 	}
 	if len(value) == len(class) {
@@ -166,9 +166,9 @@ func opensValue(before string, quote int) bool {
 func startsName(c byte) bool { return isSpace(c) || c == '"' || c == '\'' || c == '/' || c == '=' }
 func endsName(c byte) bool   { return isSpace(c) || c == '=' || c == '/' || c == '>' }
 
-// attrEquals compares the decoded value; it allocates only when the raw value contains '&'.
+// attrEquals compares the decoded value; it allocates only when the raw value has '&' or CR.
 func attrEquals(raw, value string) bool {
-	if strings.IndexByte(raw, '&') >= 0 {
+	if needsDecoding(raw) {
 		return decodeHTML(raw, true) == value
 	}
 	return raw == value
