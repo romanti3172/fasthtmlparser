@@ -16,11 +16,14 @@ jobs:
         # the oldest Go the module declares in go.mod, and the current one
         go: ["1.23.x", stable]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      # No cache: the module has no dependencies to cache (and no go.sum);
+      # the few of the bench module are downloaded on each run.
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go }}
+          cache: false
 
       - name: Vet and test
         run: |
@@ -39,11 +42,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: stable
+          cache: false
 
       # golangci-lint with .golangci.yml: errcheck, govet, ineffassign, staticcheck, unused, misspell, gofmt
       - uses: golangci/golangci-lint-action@v9
