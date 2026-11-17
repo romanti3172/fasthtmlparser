@@ -3,7 +3,9 @@
 Go port of [z3l.FastHtmlParser](https://github.com/romanti3172/z3l.FastHtmlParser): a fast, low-allocation
 HTML / XML parser for scraping. The whole API is ported: the parser, attributes, HTML5 entities, visible text and text
 with line breaks, `Find` / `FindAll`, navigation, links, **XPath 1.0**, **CSS selectors** and the one-call shortcuts.
-Only the .NET-specific parts are left out: parsing from a pooled `char[]` buffer and `Dispose`.
+Parsing from a pooled `char[]` buffer and `Dispose` of the .NET version have no Go counterpart, and need none:
+`Parse` works on the string it is given without copying it, and every value it returns (`Text`, `Attr`, `Body`, ...)
+is a substring of it, so a buffer must not be reused while they are in use; the garbage collector frees the rest.
 
 ```
 go get github.com/romanti3172/fasthtmlparser
