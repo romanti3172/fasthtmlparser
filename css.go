@@ -160,7 +160,8 @@ func isElement(n *Node) bool {
 	if n.key >= 0 {
 		return n.key != int16(TagComment) && n.key != int16(TagDoctype) && n.key != int16(TagXmlDeclaration)
 	}
-	return n.custom != "" && n.custom[0] != '!' && n.custom[0] != '?'
+	c := n.customName()
+	return c != "" && c[0] != '!' && c[0] != '?'
 }
 
 // ----- the tree: sibling links and positions, built once per document -----
@@ -247,7 +248,7 @@ func (t *cssTree) typePositions() *typePositions {
 	key := func(n *Node) typeKey {
 		k := typeKey{parent: n.parent, key: n.key}
 		if n.key < 0 {
-			k.name = n.custom
+			k.name = n.customName()
 		}
 		return k
 	}
@@ -321,7 +322,7 @@ func (c *cssCompound) matches(n *Node, ctx *cssContext) bool {
 			return false
 		}
 	case c.name != "":
-		if n.key >= 0 || n.custom != c.name {
+		if n.key >= 0 || n.customName() != c.name {
 			return false
 		}
 	default:

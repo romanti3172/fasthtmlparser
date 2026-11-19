@@ -1,6 +1,7 @@
 package fasthtmlparser
 
 import (
+	"math/bits"
 	"strings"
 	"sync"
 )
@@ -28,21 +29,17 @@ type tagState struct {
 	selfClosed bool  // <x/>: stays in the open list (a later </x> ends it), but does not nest anything
 }
 
-type customName struct {
-	name string // the lower-case name, one string per document
-	open int32  // how many tags with this name are in the open list
-}
-
 type parseState struct {
 	doc        *Document
 	src        string
 	isXML      bool
 	nodes      []Node
 	states     []tagState
-	stack      []int32 // indexes of the open tags that contain the following ones
-	openByKey  []int32 // per Tag, how many are on the stack: kept only in rules mode
-	openInList []int32 // per Tag, how many are in the open list: an end tag with none is skipped
-	custom     map[string]*customName
+	stack      []int32          // indexes of the open tags that contain the following ones
+	openByKey  []int32          // per Tag, how many are on the stack: kept only in rules mode
+	openInList []int32          // per Tag, how many are in the open list: an end tag with none is skipped
+	custom     map[string]int32 // lower-case custom name → its Node.custom id (index + 1 into doc.customNames)
+	customOpen []int32          // per custom id - 1, how many tags with that name are in the open list
 	count      int
 	stackTop   int
 	lastOpen   int32
@@ -75,17 +72,18 @@ func parse(doc *Document, src string) []Node {
 	}
 
 	sc := scratchPool.Get().(*scratch)
-	if cap(sc.nodes) < maxTags {
+	if cap(sc.states) < maxTags {
 		sc.nodes = make([]Node, maxTags)
 		sc.states = make([]tagState, maxTags)
 	}
+	nodes := sc.nodes[:maxTags]
 	clear(sc.openInList)
 
 	st := &parseState{
 		doc:        doc,
 		src:        src,
 		isXML:      isXML(src),
-		nodes:      sc.nodes[:maxTags],
+		nodes:      nodes,
 		states:     sc.states[:maxTags],
 		stack:      sc.stack,
 		openByKey:  sc.openByKey,
@@ -109,15 +107,17 @@ func parse(doc *Document, src string) []Node {
 	}
 	st.truncateOpenList(0, regionEnd-1)
 
+	// Copied out of the scratch list: writing the tags straight into a fresh list measured 15-20% slower
+	// (the scratch list stays in cache between documents).
 	result := make([]Node, st.count)
-	copy(result, st.nodes[:st.count])
+	copy(result, nodes[:st.count])
+	clear(nodes[:st.count]) // do not keep the documents alive through the pool
 	for k := range result {
 		if result[k].innerEnd == 0 {
 			result[k].innerStart = 0 // not closed: no body
 		}
 	}
 
-	clear(st.nodes[:st.count]) // do not keep the documents alive through the pool
 	sc.stack = st.stack
 	scratchPool.Put(sc)
 	return result
@@ -154,7 +154,7 @@ func (st *parseState) scan(rules bool, from, to int) (tagStarted bool, tagStart 
 					depth = st.states[parent].depth + 1
 				}
 				st.nodes[st.count] = Node{doc: st.doc, index: int32(st.count), parent: parent, key: int16(TagComment),
-					start: int32(i), end: int32(commentEnd), innerStart: int32(commentEnd + 1), depth: depth}
+					start: int32(i), end: int32(commentEnd), innerStart: int32(commentEnd + 1), depth: int16(depth)}
 				st.states[st.count] = tagState{key: int32(TagComment), depth: depth, prevOpen: -1}
 				st.count++
 				i = commentEnd + 1
@@ -238,7 +238,7 @@ func (st *parseState) endTag(rules bool, src string, tagStart, gt int) {
 // with the optional-end-tag rules instead, and the end tag is to be matched once more.
 func (st *parseState) matchEnd(rules bool, key int32, name string, tagStart, gt int, canRepair bool) bool {
 	// A name that no open tag has is a stray end tag: it is skipped without scanning the open tags.
-	var closing *customName
+	var closing int32
 	if key >= 0 {
 		if st.openInList[key] <= 0 {
 			return false
@@ -247,7 +247,7 @@ func (st *parseState) matchEnd(rules bool, key int32, name string, tagStart, gt 
 		if st.custom == nil {
 			return false
 		}
-		if closing = st.custom[lowerKey(name)]; closing == nil || closing.open <= 0 {
+		if closing = st.custom[lowerKey(name)]; closing == 0 || st.customOpen[closing-1] <= 0 {
 			return false
 		}
 	}
@@ -257,7 +257,7 @@ func (st *parseState) matchEnd(rules bool, key int32, name string, tagStart, gt 
 			if st.states[j].key != key {
 				continue
 			}
-		} else if st.states[j].key >= 0 || st.nodes[j].custom != closing.name {
+		} else if st.states[j].key >= 0 || st.nodes[j].custom != closing {
 			continue
 		}
 
@@ -304,7 +304,7 @@ func (st *parseState) startTag(rules bool, src string, tagStart, gt int) int {
 	name := extractTagName(tagSource)
 
 	key := int32(-1)
-	var custom string
+	var custom int32
 	if k, ok := lookupTag(name); ok {
 		key = int32(k)
 	} else {
@@ -347,7 +347,7 @@ func (st *parseState) startTag(rules bool, src string, tagStart, gt int) int {
 
 	index := st.count
 	st.nodes[index] = Node{doc: st.doc, index: int32(index), parent: parent, key: int16(key), custom: custom,
-		start: int32(tagStart - 1), end: int32(gt), innerStart: int32(gt + 1), depth: depth}
+		start: int32(tagStart - 1), end: int32(gt), innerStart: int32(gt + 1), depth: int16(depth)}
 
 	// Void elements (<br>, <img>, <meta>, ...) and declarations never contain anything.
 	isVoid := !st.isXML && key >= 0 && voidTags[key]
@@ -474,30 +474,30 @@ func (st *parseState) truncateOpenList(first int32, end int) {
 	st.lastOpen = k
 }
 
-func (st *parseState) adjustCustom(name string, delta int32) {
-	if st.custom == nil || name == "" {
-		return
-	}
-	if c := st.custom[name]; c != nil {
-		c.open += delta
+func (st *parseState) adjustCustom(id int32, delta int32) {
+	if id > 0 {
+		st.customOpen[id-1] += delta
 	}
 }
 
-// internName returns the lower-case name as one string per document.
-func (st *parseState) internName(name string) string {
+// internName returns the id of the lower-case name (Node.custom): one string per distinct name per document.
+func (st *parseState) internName(name string) int32 {
 	if name == "" {
-		return ""
+		return 0
 	}
 	if st.custom == nil {
-		st.custom = make(map[string]*customName)
+		st.custom = make(map[string]int32)
 	}
 	lower := lowerKey(name)
-	if c := st.custom[lower]; c != nil {
-		return c.name
+	if id := st.custom[lower]; id != 0 {
+		return id
 	}
 	interned := strings.Clone(lower)
-	st.custom[interned] = &customName{name: interned}
-	return interned
+	st.doc.customNames = append(st.doc.customNames, interned)
+	st.customOpen = append(st.customOpen, 0)
+	id := int32(len(st.doc.customNames))
+	st.custom[interned] = id
+	return id
 }
 
 // scopeStart returns the stack position of the outermost target of rule below the first stop tag, or -1.
@@ -554,8 +554,31 @@ func (st *parseState) closeInScope(rule *impliedEndRule, end int, byKey bool) {
 
 var tagChar = [256]bool{'<': true, '=': true, '>': true}
 
+const (
+	swarLo = 0x0101010101010101
+	swarHi = 0x8080808080808080
+)
+
+// swarEq marks the bytes of x equal to c with their high bit. Only the lowest mark is exact
+// (a borrow can mark bytes above it), which is all indexTagChar needs.
+func swarEq(x, c uint64) uint64 {
+	v := x ^ (c * swarLo)
+	return (v - swarLo) &^ v & swarHi
+}
+
+// indexTagChar returns the index of the first '<', '=' or '>' in s, or -1.
+// Go has no vectorized IndexByte for three bytes, so it tests 8 bytes at a time (SWAR).
 func indexTagChar(s string) int {
-	for j := 0; j < len(s); j++ {
+	j := 0
+	for ; j+8 <= len(s); j += 8 {
+		_ = s[j+7]
+		x := uint64(s[j]) | uint64(s[j+1])<<8 | uint64(s[j+2])<<16 | uint64(s[j+3])<<24 |
+			uint64(s[j+4])<<32 | uint64(s[j+5])<<40 | uint64(s[j+6])<<48 | uint64(s[j+7])<<56
+		if m := swarEq(x, '<') | swarEq(x, '=') | swarEq(x, '>'); m != 0 {
+			return j + bits.TrailingZeros64(m)/8
+		}
+	}
+	for ; j < len(s); j++ {
 		if tagChar[s[j]] {
 			return j
 		}
@@ -733,25 +756,44 @@ func tagSet(tags ...Tag) (set [tagCount]bool) {
 	return
 }
 
-// Tag name → Tag, keyed by the lower-case name.
-var tagLookup = func() map[string]Tag {
-	m := make(map[string]Tag, tagCount)
-	for i, name := range tagNames {
-		m[name] = Tag(i)
+// Tag name → Tag: an open-addressing table keyed by the lower-case name. A Go map hashes the whole
+// string with AES; here the hash is one multiply of the first 8 bytes and the length, which is enough
+// for a fixed set of short names.
+const tagTableBits = 10
+
+type tagSlot struct {
+	name string
+	tag  Tag
+}
+
+var tagTable = func() (t [1 << tagTableBits]tagSlot) {
+	if int(tagCount)*4 > len(t) {
+		panic("fasthtmlparser: tagTable too small")
 	}
-	return m
+	for i, name := range tagNames {
+		var buf [32]byte
+		copy(buf[:], name)
+		h := tagHash(&buf, len(name))
+		for t[h].name != "" {
+			h = (h + 1) & (len(t) - 1)
+		}
+		t[h] = tagSlot{name: name, tag: Tag(i)}
+	}
+	return
 }()
 
-// lookupTag finds a tag name case-insensitively without allocating.
+func tagHash(buf *[32]byte, n int) int {
+	x := uint64(buf[0]) | uint64(buf[1])<<8 | uint64(buf[2])<<16 | uint64(buf[3])<<24 |
+		uint64(buf[4])<<32 | uint64(buf[5])<<40 | uint64(buf[6])<<48 | uint64(buf[7])<<56
+	return int(((x ^ uint64(n)<<58) * 0x9E3779B97F4A7C15) >> (64 - tagTableBits))
+}
+
+// lookupTag finds a tag name case-insensitively (ASCII) without allocating.
 func lookupTag(name string) (Tag, bool) {
 	if len(name) == 0 || len(name) > 32 {
 		return 0, false
 	}
-	if isLowerASCII(name) {
-		t, ok := tagLookup[name]
-		return t, ok
-	}
-	var buf [32]byte
+	var buf [32]byte // zero past the name: tagHash reads 8 bytes
 	for i := 0; i < len(name); i++ {
 		c := name[i]
 		if c >= 'A' && c <= 'Z' {
@@ -759,8 +801,16 @@ func lookupTag(name string) (Tag, bool) {
 		}
 		buf[i] = c
 	}
-	t, ok := tagLookup[string(buf[:len(name)])] // no allocation: a map index with a converted []byte
-	return t, ok
+	lower := buf[:len(name)]
+	for h := tagHash(&buf, len(name)); ; h = (h + 1) & (len(tagTable) - 1) {
+		s := &tagTable[h]
+		if s.name == "" {
+			return 0, false
+		}
+		if s.name == string(lower) { // no allocation: a comparison with a converted []byte
+			return s.tag, true
+		}
+	}
 }
 
 func isLowerASCII(s string) bool {

@@ -373,7 +373,7 @@ func content(x *xnode) (first int, end int32, childDepth int32, textStart, textE
 		return 0, math.MaxInt32, 0, 0, len(x.doc.source), true
 	case xElement:
 		if t := x.tag; t.innerStart > 0 && t.innerEnd > 0 {
-			return int(t.index) + 1, t.end, t.depth + 1, int(t.innerStart), int(t.innerEnd) + 1, true
+			return int(t.index) + 1, t.end, int32(t.depth) + 1, int(t.innerStart), int(t.innerEnd) + 1, true
 		}
 	}
 	return 0, 0, 0, 0, 0, false
@@ -399,7 +399,7 @@ func addChildren(x *xnode, test *nodeTest, out nodeSet) nodeSet {
 		if t.end > end {
 			break
 		}
-		if t.depth != childDepth {
+		if int32(t.depth) != childDepth {
 			continue
 		}
 		if wantText && int(t.start) > p {

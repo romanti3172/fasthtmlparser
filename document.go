@@ -17,25 +17,35 @@ import (
 
 // Document is a parsed page.
 type Document struct {
-	source string
-	nodes  []Node
-	css    atomic.Pointer[cssTree] // sibling links and positions, built by the first selector that needs them
-	url    string
-	base   *url.URL // url parsed once, for resolving relative links; nil when there is none
+	source      string
+	nodes       []Node
+	customNames []string                // lower-case names of the tags not in Tag; Node.custom is an index + 1
+	css         atomic.Pointer[cssTree] // sibling links and positions, built by the first selector that needs them
+	url         string
+	base        *url.URL // url parsed once, for resolving relative links; nil when there is none
 }
 
 // Node is one tag of a document. Positions are byte offsets into the document source.
+// 40 bytes: the tag list of a page is one allocation, and a smaller node means less memory to fill and walk.
 type Node struct {
 	doc        *Document
-	custom     string // lower-case name for tags not in Tag
 	index      int32
 	parent     int32 // index of the enclosing tag, -1 at the top level
 	start      int32 // the opening '<'
 	end        int32 // the last '>': of the end tag when there is one, otherwise of the opening tag
 	innerStart int32 // right after the opening tag; 0 when the tag is not closed
 	innerEnd   int32 // the last byte before the end tag; 0 when the tag is not closed
-	depth      int32
+	custom     int32 // for tags not in Tag: index + 1 into Document.customNames; 0 otherwise
+	depth      int16 // at most maxDepth: deeper tags are not nested
 	key        int16 // Tag, or -1
+}
+
+// customName returns the lower-case name of a tag not in Tag, or "".
+func (n *Node) customName() string {
+	if n.custom == 0 {
+		return ""
+	}
+	return n.doc.customNames[n.custom-1]
 }
 
 // Parse parses an HTML or XML page. The document keeps a reference to source and returns substrings of it.
@@ -86,7 +96,7 @@ func (n *Node) Name() string {
 	if n.key >= 0 {
 		return tagNames[n.key]
 	}
-	return n.custom
+	return n.customName()
 }
 
 // Depth returns the nesting depth: 0 for top-level tags.
@@ -472,7 +482,7 @@ func (q Query) Matches(n *Node) bool {
 		return false
 	}
 	if q.key != 0 {
-		if n.key != q.key-1 && (n.key >= 0 || q.name == "" || !strings.EqualFold(n.custom, q.name)) {
+		if n.key != q.key-1 && (n.key >= 0 || q.name == "" || !strings.EqualFold(n.customName(), q.name)) {
 			return false
 		}
 	} else if q.name != "" && !strings.EqualFold(n.Name(), q.name) {

@@ -107,7 +107,7 @@ func TestConformanceWithDotNet(t *testing.T) {
 			}
 			for i := 0; i < min(doc.Len(), len(expected)) && len(problems) < 10; i++ {
 				n, e := doc.Node(i), expected[i]
-				got := tagPos{n.Name(), n.parent, n.depth, n.start, n.end, n.innerStart, n.innerEnd, n.Text()}
+				got := tagPos{n.Name(), n.parent, int32(n.depth), n.start, n.end, n.innerStart, n.innerEnd, n.Text()}
 				want := tagPos{e.Name, e.Parent, e.Depth, e.Start, e.End, e.InnerStart, e.InnerEnd, e.Text}
 				if got != want {
 					problems = append(problems, fmt.Sprintf("[%d]\n  go:   %+v\n  .net: %+v", i, short(got), short(want)))
