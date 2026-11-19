@@ -114,22 +114,22 @@ Parse a page:
 
 | Page | fasthtmlparser | x/net/html | Ratio | Memory fasthtmlparser | x/net/html | Allocs fasthtmlparser | x/net/html |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| quotes, 11 KB | 28 μs | 299 μs | 10.6x | 9.5 KB | 96 KB | 2 | 2,498 |
-| laptops, 38 KB | 89 μs | 1,001 μs | 11.2x | 24.7 KB | 302 KB | 2 | 7,886 |
-| books, 51 KB | 98 μs | 981 μs | 10.0x | 33 KB | 287 KB | 2 | 6,707 |
-| books x10, 510 KB | 1.00 ms | 9.31 ms | 9.3x | 321 KB | 2.82 MB | 2 | 66,895 |
-| books without `</li>` `</p>` | 100 μs | 916 μs | 9.1x | 33 KB | 271 KB | 2 | 6,306 |
+| quotes, 11 KB | 26 μs | 285 μs | 11.1x | 6.2 KB | 96 KB | 2 | 2,498 |
+| laptops, 38 KB | 76 μs | 976 μs | 12.9x | 18.6 KB | 302 KB | 2 | 7,886 |
+| books, 51 KB | 88 μs | 971 μs | 11.1x | 24.7 KB | 287 KB | 2 | 6,707 |
+| books x10, 510 KB | 0.85 ms | 9.55 ms | 11.3x | 232 KB | 2.82 MB | 2 | 66,895 |
+| books without `</li>` `</p>` | 88 μs | 903 μs | 10.2x | 24.7 KB | 271 KB | 2 | 6,306 |
 
 Scrape a page: parse and extract the records (`TestSameRecords*` check that every variant returns the same records).
 Books: 20 × title, price, rating; quotes: 10 × text, author, tags.
 
 | Task | fasthtmlparser | Other | Ratio | Memory fasthtmlparser | Other | Allocs fasthtmlparser | Other |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| books, `Find` / goquery | 122 μs | 1,089 μs | 8.9x | 37.8 KB | 307 KB | 15 | 7,391 |
-| books, CSS / goquery | 128 μs | 1,080 μs | 8.4x | 39.8 KB | 307 KB | 136 | 7,391 |
-| books, XPath / htmlquery | 260 μs | 1,171 μs | 4.5x | 128 KB | 362 KB | 1,943 | 9,158 |
-| quotes, `Find` / goquery | 43 μs | 330 μs | 7.7x | 13.5 KB | 109 KB | 58 | 2,921 |
-| quotes, CSS / goquery | 47 μs | 322 μs | 6.9x | 14.5 KB | 109 KB | 109 | 2,921 |
+| books, `Find` / goquery | 113 μs | 1,072 μs | 9.5x | 29.3 KB | 307 KB | 15 | 7,391 |
+| books, CSS / goquery | 118 μs | 1,072 μs | 9.1x | 31.4 KB | 307 KB | 136 | 7,391 |
+| books, XPath / htmlquery | 250 μs | 1,194 μs | 4.8x | 119 KB | 362 KB | 1,943 | 9,158 |
+| quotes, `Find` / goquery | 41 μs | 336 μs | 8.1x | 10.2 KB | 109 KB | 58 | 2,921 |
+| quotes, CSS / goquery | 45 μs | 333 μs | 7.5x | 11.1 KB | 109 KB | 109 | 2,921 |
 
 The XPath engine builds node-sets per step; that is where its allocations come from, and the first thing to optimize.
 
