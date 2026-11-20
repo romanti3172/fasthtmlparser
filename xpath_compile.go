@@ -607,7 +607,27 @@ func (c *xpathCompiler) parsePrimary() xexpr {
 			c.failAt(fmt.Sprintf("%s() needs a node-set argument", t.text), t.position)
 		}
 	}
-	return &functionExpr{fn: info.fn, args: args, t: info.typ}
+	return makeAttributeTest(info.fn, args, info.typ)
+}
+
+// makeAttributeTest: contains(@a, 'x'), starts-with(...), ends-with(...), also with the attribute wrapped in literals
+// (contains(concat(' ', @class, ' '), ' x '), the usual class test), are evaluated on the attribute in place.
+func makeAttributeTest(f fn, args []xexpr, t xtype) xexpr {
+	if f == fnContains || f == fnStartsWith || f == fnEndsWith {
+		if needle, ok := args[1].(*literalExpr); ok {
+			if name, ok := attributeName(args[0]); ok {
+				return &attributeTestExpr{fn: f, name: name, needle: needle.value, needleBytes: []byte(needle.value)}
+			}
+			if concat, ok := args[0].(*functionExpr); ok && concat.fn == fnConcat && len(concat.args) == 3 {
+				prefix, ok1 := concat.args[0].(*literalExpr)
+				suffix, ok2 := concat.args[2].(*literalExpr)
+				if name, ok := attributeName(concat.args[1]); ok && ok1 && ok2 {
+					return &attributeTestExpr{fn: f, prefix: prefix.value, name: name, suffix: suffix.value, needle: needle.value, needleBytes: []byte(needle.value)}
+				}
+			}
+		}
+	}
+	return &functionExpr{fn: f, args: args, t: t}
 }
 
 // optimize: //x is descendant-or-self::node()/child::x. Without positional predicates on x it is the same
