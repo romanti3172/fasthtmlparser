@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/romanti3172/fasthtmlparser/actions/workflows/ci.yml/badge.svg)](https://github.com/romanti3172/fasthtmlparser/actions/workflows/ci.yml)
 
+**Website:** [fasthtmlparser.com](https://fasthtmlparser.com): try the parser on any page, documentation and every language.
+
 Go port of [z3l.FastHtmlParser](https://github.com/romanti3172/z3l.FastHtmlParser): a fast, low-allocation
 HTML / XML parser for scraping. The whole API is ported: the parser, attributes, HTML5 entities, visible text and text
 with line breaks, `Find` / `FindAll`, navigation, links, **XPath 1.0**, **CSS selectors** and the one-call shortcuts.
