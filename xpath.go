@@ -1,6 +1,7 @@
 package fasthtmlparser
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"slices"
@@ -956,6 +957,50 @@ func (e *attributeEqualsExpr) evalBool(c *xctx) bool {
 		return false
 	}
 	return attrEquals(raw, e.value) != e.negate
+}
+
+// attributeTestExpr: contains/starts-with/ends-with(concat('prefix', @name, 'suffix'), 'needle') (prefix and suffix
+// may be empty), tested on the attribute value in place, without a node-set and strings for every element.
+type attributeTestExpr struct {
+	baseExpr
+	fn                           fn
+	prefix, name, suffix, needle string
+	needleBytes                  []byte
+}
+
+func (e *attributeTestExpr) typ() xtype       { return xBoolean }
+func (e *attributeTestExpr) eval(c *xctx) any { return e.evalBool(c) }
+func (e *attributeTestExpr) evalBool(c *xctx) bool {
+	raw, _ := attributeOf(&c.node, e.name) // a missing attribute is an empty node-set, whose string-value is ""
+	if needsDecoding(raw) {
+		raw = decodeHTML(raw, true)
+	}
+	if e.prefix == "" && e.suffix == "" {
+		return testString(e.fn, raw, e.needle)
+	}
+	var stack [256]byte
+	joined := append(append(append(stack[:0], e.prefix...), raw...), e.suffix...)
+	return testBytes(e.fn, joined, e.needle, e.needleBytes)
+}
+
+func testString(f fn, s, needle string) bool {
+	switch f {
+	case fnStartsWith:
+		return strings.HasPrefix(s, needle)
+	case fnEndsWith:
+		return strings.HasSuffix(s, needle)
+	}
+	return strings.Contains(s, needle)
+}
+
+func testBytes(f fn, s []byte, needle string, needleBytes []byte) bool {
+	switch f {
+	case fnStartsWith:
+		return len(s) >= len(needle) && string(s[:len(needle)]) == needle
+	case fnEndsWith:
+		return len(s) >= len(needle) && string(s[len(s)-len(needle):]) == needle
+	}
+	return bytes.Contains(s, needleBytes)
 }
 
 // attributeExistsExpr: [@name].
