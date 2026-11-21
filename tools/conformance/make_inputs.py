@@ -32,6 +32,13 @@ extra = [
  '<div><h1>Title</h1><p>One <b>two</b><br>three<br><br>four</p><ul><li>a</li><li>b &amp; c</li></ul>'
  '<table><tr><td>x</td><td>y</td></tr><tr><th>z</th></tr></table><script>var s="<p>";</script>'
  '<!-- c --><p>last&nbsp;&nbsp;word</p><pre>  keep\n   lines  </pre></div>after <i>it</i> <b>tail</b>',
+ # markup named "!..." or "?..." is a leaf: it nests nothing, no end tag is matched to it
+ '<?xml version="1.0" encoding="UTF-8"?><urlset><url><loc>a</loc></url><url><loc>b</loc></url></urlset>',
+ '<?xml version="1.0"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "x.dtd"><html><head><title>t</title>'
+ '</head><body><p>a</p><?xml-stylesheet href="s.xsl"?><p>b</p></?xml-stylesheet></body></html>',
+ '<html><head><![if !IE]><link rel="stylesheet" href="a.css"><![endif]><title>x</title></head><body>'
+ '<!ELEMENT x ANY><p>a</p></!ELEMENT></body></html>',
+ '<html><body><p>a</p><?foo bar?><p>b</p><p>c</p><div><?php echo 1; ?><span>s</span></?php></div></body></html>',
 ]
 os.makedirs(out, exist_ok=True)
 def w(name, s):

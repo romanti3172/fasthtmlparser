@@ -349,8 +349,11 @@ func (st *parseState) startTag(rules bool, src string, tagStart, gt int) int {
 	st.nodes[index] = Node{doc: st.doc, index: int32(index), parent: parent, key: int16(key), custom: custom,
 		start: int32(tagStart - 1), end: int32(gt), innerStart: int32(gt + 1), depth: int16(depth)}
 
-	// Void elements (<br>, <img>, <meta>, ...) and declarations never contain anything.
-	isVoid := !st.isXML && key >= 0 && voidTags[key]
+	// Void elements (<br>, <img>, <meta>, ...) never contain anything. Neither does markup named "!..." or "?..."
+	// (<!doctype>, <?xml ...?>, <?php ...?>, <![if IE]>), in HTML and in XML alike: a bogus comment in a browser,
+	// a declaration or processing instruction in XML. The name starts with an ASCII letter, '!' or '?'
+	// (isMarkupStart), and '!' and '?' sort before the letters: one compare.
+	isVoid := src[tagStart] <= '?' || (!st.isXML && key >= 0 && voidTags[key])
 	selfClosing := isVoid
 	if !selfClosing {
 		trimmed := strings.TrimRight(tagSource, " \t\r\n\f\v")
